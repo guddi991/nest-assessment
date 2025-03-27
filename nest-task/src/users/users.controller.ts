@@ -2,43 +2,36 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
   Patch,
-  Param,
   Delete,
+  Param,
+  Body,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { RolesGuard } from '../common/roles.guard';
+import { SetMetadata } from '@nestjs/common';
 
 @Controller('users')
-export class UserController {
+@UseGuards(RolesGuard)
+export class UsersController {
   constructor(private readonly userService: UserService) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
-  }
-  
-
   @Get()
+  @SetMetadata('roles', ['admin'])
   findAll() {
     return this.userService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
-  }
-
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  @SetMetadata('roles', ['admin'])
+  updateUserRole(@Param('id') id: number, @Body() body: { role: string }) {
+    return this.userService.updateUserRole(id, body.role);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+  @SetMetadata('roles', ['admin'])
+  deleteUser(@Param('id') id: number) {
+    return this.userService.deleteUser(id);
   }
 }

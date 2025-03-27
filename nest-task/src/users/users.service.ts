@@ -16,10 +16,16 @@ export class UserService {
   ) {}
   
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const newUser = this.userRepository.create(createUserDto);
-    newUser.password = await bcrypt.hash(createUserDto.password, 10);
-    return await this.userRepository.save(newUser);
+  // async create(createUserDto: CreateUserDto): Promise<User> {
+  //   const newUser = this.userRepository.create(createUserDto);
+  //   newUser.password = await bcrypt.hash(createUserDto.password, 10);
+  //   return await this.userRepository.save(newUser);
+  // }
+  
+  async createUser(email: string, password: string, role: string = 'viewer') {
+    const hashedPassword = await bcrypt.hash(password, 10); // Hash password before saving
+    const user = this.userRepository.create({ email, password: hashedPassword, role });
+    return this.userRepository.save(user);
   }
   
   async findAll(): Promise<User[]> {
@@ -50,5 +56,25 @@ export class UserService {
     await this.userRepository.delete(id);
   }
 
+  async findByEmail(email: string, includePassword = false): Promise<User | null> {
+    return await this.userRepository.findOne({
+      where: { email },
+      select: includePassword ? ['id', 'email', 'password', 'role'] : ['id', 'email', 'role'],
+    });
+  }
+  
+  async updateUserRole(id: number, role: string) {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) throw new Error('User not found');
+    user.role = role;
+    return this.userRepository.save(user);
+  }
+  
+  async deleteUser(id: number) {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) throw new Error('User not found');
+    return this.userRepository.remove(user);
+  }
+  
 
 }
